@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>H Visual Media — Weekly Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,sans-serif;background:#f0ede8;color:#1a1a1a;min-height:100vh;padding:24px 16px}
+  @media(prefers-color-scheme:dark){body{background:#161616;color:#e8e8e8}}
+  .wrap{max-width:720px;margin:0 auto}
+  input{font-family:inherit;border:0.5px solid #ccc;padding:6px 10px;border-radius:8px;font-size:13px;background:#fff;color:#1a1a1a;outline:none}
+  input:focus{border-color:#2980b9;box-shadow:0 0 0 2px rgba(41,128,185,0.15)}
+  @media(prefers-color-scheme:dark){input{background:#2a2a2a;color:#e8e8e8;border-color:#444}}
+  button{cursor:pointer;font-family:inherit}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="sr-only">H Visual Media Weekly Dashboard</h1>
+  <div id="root"></div>
+</div>
+
+<script>
+const DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+const CAT_META={
+  today:        {label:"Today's Tasks",         icon:"ti-star",           color:"#c0392b"},
+  business:     {label:"Business & Production", icon:"ti-briefcase",      color:"#2980b9"},
+  partnerships: {label:"Partnership Outreach",  icon:"ti-handshake",      color:"#8e44ad"},
+  content:      {label:"Content & YouTube",     icon:"ti-brand-youtube",  color:"#e67e22"},
+  footage:      {label:"Footage & Video Mgmt",  icon:"ti-video",          color:"#16a085"},
+  gear_sell:    {label:"Gear to Sell",          icon:"ti-camera",         color:"#d35400"},
+  tech:         {label:"Tech & Infrastructure", icon:"ti-device-desktop", color:"#1abc9c"},
+  van:          {label:"Van Build",             icon:"ti-car",            color:"#7f8c8d"},
+  home:         {label:"Home & Personal",       icon:"ti-home",           color:"#27ae60"},
+  fitness:      {label:"Fitness",               icon:"ti-run",            color:"#e74c3c"},
+};
+
+const INITIAL_TASKS={
+  today:[
+    {id:"t1",text:"Change the ESKIN filters",done:false},
+    {id:"t2",text:"Update and upload ECA video to Frame.io",done:false},
+    {id:"t3",text:"Get Claire's RTO7 projects on LTO tape",done:false},
+    {id:"t4",text:"Send email to Colin Field",done:false},
+    {id:"t5",text:"Update personal and business websites",done:false},
+    {id:"t6",text:"Send hospice hike and bike info to friends and family",done:false},
+    {id:"t7",text:"Talk to Side Launch about picking up stuff",done:false},
+    {id:"t8",text:"Review what Matt Finland sent for the video shoot",done:false},
+    {id:"t9",text:"Upload video to YouTube",done:false},
+    {id:"t10",text:"Plan charger box build for camera batteries (business)",done:false},
+    {id:"t11",text:"Put in earplugs",done:false},
+  ],
+  business:[
+    {id:"b1",text:"Email Karen about UK trip — confirm details",done:false},
+    {id:"b2",text:"Build contact list (Ice Water Springs and others)",done:false},
+    {id:"b3",text:"Push documentary calls and outreach forward",done:false},
+    {id:"b4",text:"Blue Mountain Village Association call (Tuesday 3 PM)",done:false},
+    {id:"b5",text:"Rework personal website",done:false},
+    {id:"b6",text:"Rework production company website",done:false},
+    {id:"b7",text:"Friday: Pick up camera gear (if not going to UK)",done:false},
+    {id:"b8",text:"Cancel Dropbox and other subscriptions",done:false},
+  ],
+  partnerships:[
+    {id:"p1",text:"TILTA — reach out about partnership",done:false},
+    {id:"p2",text:"DJI — reach out about partnership",done:false},
+    {id:"p3",text:"Lowell — reach out about partnership",done:false},
+    {id:"p4",text:"DZO — reach out about partnership",done:false},
+    {id:"p5",text:"OWC — reach out about partnership",done:false},
+    {id:"p6",text:"Acer — reach out about partnership",done:false},
+  ],
+  content:[
+    {id:"c1",text:"Plan and shoot YouTube content — Troy's cousin",done:false},
+    {id:"c2",text:"Plan and shoot YouTube content — Devin (gravel biking)",done:false},
+    {id:"c3",text:"Plan and shoot YouTube content — Rim Makers",done:false},
+    {id:"c4",text:"Post YouTube shorts",done:false},
+    {id:"c5",text:"Create and post California reel short",done:false},
+    {id:"c6",text:"Plan and organize South Africa content",done:false},
+    {id:"c7",text:"Plan hospice hike and bike content series",done:false},
+  ],
+  footage:[
+    {id:"f1",text:"Transfer footage shot with Bella",done:false},
+    {id:"f2",text:"Upload documentary photos from Matt",done:false},
+    {id:"f3",text:"Backup LTO tapes — Thomas",done:false},
+    {id:"f4",text:"Backup LTO tapes — Thomas Kristoffik (Great Lakes Surfing)",done:false},
+    {id:"f5",text:"Wednesday 1 PM video shoot in Thornbury (leave 12:15)",done:false},
+  ],
+  gear_sell:[
+    {id:"g1",text:"List Sony prime lenses for sale online (Kijiji + other marketplaces)",done:false},
+    {id:"g2",text:"Contact Ajit — see if he wants to buy the Sony prime lenses",done:false},
+    {id:"g3",text:"REMINDER: Research used Sony prime prices before listing",done:false},
+    {id:"g4",text:"Friday: Sell camera gear from list (if not going to UK)",done:false},
+    {id:"g5",text:"Sell bike — list and arrange",done:false},
+  ],
+  tech:[
+    {id:"i1",text:"Test 10-bit gigabit internet connection speeds",done:false},
+    {id:"i2",text:"Hardwire gigabit connection if speeds confirm improvement",done:false},
+    {id:"i3",text:"Get NAS set up and running",done:false},
+    {id:"i4",text:"Download Dropbox files and backup before cancelling",done:false},
+    {id:"i5",text:"Review calendar and add additional information",done:false},
+  ],
+  van:[
+    {id:"v1",text:"Storage and Milwaukee Pack-Out systems",done:false},
+    {id:"v2",text:"C-stand mounting and speed rail",done:false},
+    {id:"v3",text:"Monitor setup and window install",done:false},
+    {id:"v4",text:"Boat lining and diesel heater installation",done:false},
+  ],
+  home:[
+    {id:"h1",text:"Major office cleanup and organization (Monday)",done:false},
+    {id:"h2",text:"Laundry (Monday)",done:false},
+    {id:"h3",text:"Grocery shopping (Monday)",done:false},
+    {id:"h4",text:"Meal prep and food organization (Monday)",done:false},
+    {id:"h5",text:"Review and organize bike gear (Tuesday)",done:false},
+    {id:"h6",text:"Dog walks — Nelson (daily)",done:false},
+  ],
+  fitness:[
+    {id:"fi1",text:"Leg workout (Monday)",done:false},
+    {id:"fi2",text:"Bike ride (Monday)",done:false},
+    {id:"fi3",text:"Fitness routine throughout week",done:false},
+  ],
+};
+
+const SCHEDULE={
+  1:[
+    {time:"6:00 AM",task:"Wake up"},
+    {time:"6:30 AM",task:"Coffee, morning routine"},
+    {time:"7:00 AM",task:"Basement / computer — emails, organizing, calendar"},
+    {time:"Morning",task:"Transfer Bella footage, upload Matt photos, office cleanup"},
+    {time:"Daytime",task:"Laundry, grocery, meal prep, leg workout, bike ride, dog walk"},
+    {time:"Evening",task:"Post YouTube videos and shorts"},
+  ],
+  2:[
+    {time:"3:00 PM",task:"Blue Mountain Village Association call"},
+    {time:"Throughout",task:"Organize bike gear, shoot YouTube content, dog walk, fitness"},
+  ],
+  3:[
+    {time:"12:15 PM",task:"Leave for Thornbury (video shoot)"},
+    {time:"1:00 PM",task:"Video shoot — Thornbury"},
+    {time:"Throughout",task:"Dog walk, fitness"},
+  ],
+  4:[{time:"Throughout",task:"Business development, content planning, LTO backups, fitness"}],
+  5:[
+    {time:"Confirm",task:"UK trip status (email Karen early week)"},
+    {time:"If NOT UK",task:"Pick up camera gear, sell gear and bike"},
+    {time:"Throughout",task:"Website updates, tech infrastructure, fitness"},
+  ],
+  6:[{time:"Ongoing",task:"Dog walks, fitness, content planning"}],
+  0:[{time:"Ongoing",task:"Reset day — plan next week, content, personal projects"}],
+};
+
+function loadTasks(){
+  try{const s=localStorage.getItem("hvm_tasks_v3");return s?JSON.parse(s):INITIAL_TASKS;}
+  catch{return JSON.parse(JSON.stringify(INITIAL_TASKS));}
+}
+function saveTasks(t){try{localStorage.setItem("hvm_tasks_v3",JSON.stringify(t));}catch{}}
+
+const isDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches;
+const C={
+  card:isDark?"#222":"#fff",
+  cardSec:isDark?"#2a2a2a":"#f7f5f2",
+  border:isDark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.1)",
+  text:isDark?"#e8e8e8":"#1a1a1a",
+  sec:isDark?"#999":"#666",
+  ter:isDark?"#555":"#aaa",
+};
+
+let S={
+  tasks:loadTasks(),
+  collapsed:{van:true,home:false,fitness:false},
+  activeDay:new Date().getDay(),
+  calEvents:[],
+  calLoading:true,
+  wx:{collingwood:null,toronto:null},
+};
+
+function set(patch){Object.assign(S,typeof patch==="function"?patch(S):patch);draw();}
+window.set=set;
+
+function toggleTask(id){
+  const tasks={};
+  for(const cat in S.tasks) tasks[cat]=S.tasks[cat].map(t=>t.id===id?{...t,done:!t.done}:t);
+  saveTasks(tasks);set({tasks});
+}
+function deleteTask(id){
+  const tasks={};
+  for(const cat in S.tasks) tasks[cat]=S.tasks[cat].filter(t=>t.id!==id);
+  saveTasks(tasks);set({tasks});
+}
+function addTask(cat,text){
+  const tasks={...S.tasks,[cat]:[...S.tasks[cat],{id:`${cat}_${Date.now()}`,text,done:false}]};
+  saveTasks(tasks);set({tasks});
+}
+function toggleCat(cat){set({collapsed:{...S.collapsed,[cat]:!S.collapsed[cat]}});}
+window.toggleTask=toggleTask;
+window.deleteTask=deleteTask;
+window.addFromInput=function(cat){const el=document.getElementById('add_'+cat);if(el&&el.value.trim()){addTask(cat,el.value.trim());el.value='';}};
+window.toggleCat=toggleCat;
+window.setDay=function(d){set({activeDay:d});};
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function wxCard(city,key){
+  const w=S.wx[key];
+  return `<div style="background:${C.card};border:0.5px solid ${C.border};border-radius:12px;padding:14px 18px;flex:1;min-width:140px">
+    <div style="font-size:11px;color:${C.sec};margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">${city}</div>
+    ${!w
+      ?`<div style="font-size:13px;color:${C.ter}">Loading...</div>`
+      :`<div style="display:flex;align-items:center;gap:8px">
+          <i class="ti ${w.icon}" style="font-size:22px;color:${C.sec}" aria-hidden="true"></i>
+          <span style="font-size:24px;font-weight:500">${w.temp}°C</span>
+        </div>
+        <div style="font-size:11px;color:${C.sec};margin-top:5px">${esc(w.desc)} · Feels ${w.feels}°C · ${w.wind} km/h</div>`
+    }
+  </div>`;
+}
+
+function taskRow(t){
+  return `<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:0.5px solid ${C.border};opacity:${t.done?0.4:1}">
+    <button onclick="toggleTask('${esc(t.id)}')" aria-label="${t.done?'Mark incomplete':'Mark complete'}"
+      style="width:20px;height:20px;border-radius:4px;flex-shrink:0;margin-top:1px;
+      border:${t.done?'none':'1.5px solid '+C.sec};
+      background:${t.done?'#27ae60':'transparent'};
+      display:flex;align-items:center;justify-content:center">
+      ${t.done?`<i class="ti ti-check" style="font-size:11px;color:#fff" aria-hidden="true"></i>`:''}
+    </button>
+    <span style="font-size:14px;line-height:1.5;flex:1;text-decoration:${t.done?'line-through':'none'};color:${t.done?C.ter:C.text}">${esc(t.text)}</span>
+    <button onclick="deleteTask('${esc(t.id)}')" aria-label="Remove"
+      style="background:none;border:none;color:${C.ter};padding:2px;flex-shrink:0">
+      <i class="ti ti-x" style="font-size:13px" aria-hidden="true"></i>
+    </button>
+  </div>`;
+}
+
+function catBlock(key,meta,tasks){
+  const done=tasks.filter(t=>t.done);
+  const active=tasks.filter(t=>!t.done);
+  const coll=!!S.collapsed[key];
+  return `<div style="margin-bottom:12px;background:${C.card};border:0.5px solid ${C.border};border-radius:12px;overflow:hidden">
+    <div onclick="toggleCat('${key}')" style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:${C.cardSec};cursor:pointer;${coll?'':'border-bottom:0.5px solid '+C.border}">
+      <i class="ti ${meta.icon}" style="font-size:16px;color:${meta.color}" aria-hidden="true"></i>
+      <span style="font-weight:500;font-size:14px;flex:1;color:${C.text}">${meta.label}</span>
+      <span style="font-size:11px;color:${C.sec};margin-right:8px">${done.length}/${tasks.length}</span>
+      <i class="ti ${coll?'ti-chevron-right':'ti-chevron-down'}" style="font-size:13px;color:${C.ter}" aria-hidden="true"></i>
+    </div>
+    ${coll?'':`<div style="padding:4px 16px 14px">
+      ${active.map(taskRow).join('')}
+      ${done.length?`<div style="margin-top:10px">
+        <div style="font-size:10px;color:${C.ter};margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Completed</div>
+        ${done.map(taskRow).join('')}
+      </div>`:''}
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input id="add_${key}" placeholder="Add task..." onkeydown="if(event.key==='Enter')addFromInput('${key}')"
+          style="flex:1;font-size:13px;padding:6px 10px;border-radius:8px;border:0.5px solid ${C.border};background:${C.card};color:${C.text}">
+        <button onclick="addFromInput('${key}')"
+          style="padding:6px 14px;font-size:13px;border-radius:8px;border:0.5px solid ${C.border};background:none;color:${C.text}">Add</button>
+      </div>
+    </div>`}
+  </div>`;
+}
+
+function draw(){
+  const now=new Date();
+  const all=Object.values(S.tasks).flat();
+  const done=all.filter(t=>t.done).length;
+  const pct=all.length?Math.round((done/all.length)*100):0;
+  const sched=SCHEDULE[S.activeDay]||[];
+
+  document.getElementById('root').innerHTML=`
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:12px;color:${C.ter};letter-spacing:0.05em;text-transform:uppercase;margin-bottom:3px">${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}</div>
+        <div style="font-size:22px;font-weight:500">H Visual Media</div>
+      </div>
+      <div style="font-size:13px;color:${C.sec}">${done}/${all.length} complete</div>
+    </div>
+    <div style="height:4px;border-radius:2px;background:${C.border};margin-bottom:20px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:#27ae60;border-radius:2px;transition:width 0.4s"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      ${wxCard("Collingwood, ON","collingwood")}
+      ${wxCard("Toronto, ON","toronto")}
+    </div>
+
+    <div style="display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap">
+      ${DAYS.map((d,i)=>`<button onclick="setDay(${i})"
+        style="padding:5px 11px;font-size:12px;border-radius:20px;border:0.5px solid;
+        border-color:${S.activeDay===i?'#2980b9':C.border};
+        background:${S.activeDay===i?'#2980b9':'transparent'};
+        color:${S.activeDay===i?'#fff':C.sec};font-weight:${S.activeDay===i?500:400}">
+        ${d.slice(0,3)}${i===now.getDay()?'<span style="margin-left:2px;font-size:9px">●</span>':''}
+      </button>`).join('')}
+    </div>
+
+    ${sched.length?`<div style="margin-bottom:14px;background:${C.card};border:0.5px solid ${C.border};border-radius:12px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:${C.cardSec};border-bottom:0.5px solid ${C.border}">
+        <i class="ti ti-clock" style="font-size:16px;color:#8e44ad" aria-hidden="true"></i>
+        <span style="font-weight:500;font-size:14px">${DAYS[S.activeDay]} Schedule</span>
+      </div>
+      <div style="padding:4px 16px 14px">
+        ${sched.map((s,i)=>`<div style="display:flex;gap:14px;padding:7px 0;border-bottom:${i<sched.length-1?'0.5px solid '+C.border:'none'}">
+          <div style="font-size:12px;color:${C.sec};white-space:nowrap;min-width:86px">${esc(s.time)}</div>
+          <div style="font-size:13px;color:${C.text}">${esc(s.task)}</div>
+        </div>`).join('')}
+      </div>
+    </div>`:''}
+
+    ${S.calLoading
+      ?`<div style="font-size:12px;color:${C.ter};margin-bottom:12px;padding:10px 0">Loading calendar...</div>`
+      :S.calEvents.length
+        ?`<div style="margin-bottom:14px;background:${C.card};border:0.5px solid ${C.border};border-radius:12px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:${C.cardSec};border-bottom:0.5px solid ${C.border}">
+              <i class="ti ti-calendar" style="font-size:16px;color:#2980b9" aria-hidden="true"></i>
+              <span style="font-weight:500;font-size:14px">Today's Calendar</span>
+            </div>
+            <div style="padding:4px 16px 14px">
+              ${S.calEvents.map((e,i)=>`<div style="display:flex;gap:14px;padding:7px 0;border-bottom:${i<S.calEvents.length-1?'0.5px solid '+C.border:'none'}">
+                <div style="font-size:12px;color:${C.sec};white-space:nowrap;min-width:86px">${esc(e.time||'')}</div>
+                <div style="font-size:13px">${esc(e.title||'')}</div>
+              </div>`).join('')}
+            </div>
+          </div>`
+        :''
+    }
+
+    ${Object.entries(CAT_META).map(([k,m])=>catBlock(k,m,S.tasks[k]||[])).join('')}
+
+    <div style="font-size:11px;color:${C.ter};text-align:center;margin-top:20px;padding-top:14px;border-top:0.5px solid ${C.border}">
+      Tasks saved in your browser · Refresh for latest weather and calendar
+    </div>
+  `;
+}
+
+async function fetchWeather(lat,lon,key){
+  try{
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,apparent_temperature,windspeed_10m&timezone=America/Toronto`);
+    const d=await r.json();
+    const c=d.current;
+    const code=c.weathercode;
+    let desc="Clear",icon="ti-sun";
+    if(code>=95){desc="Thunderstorm";icon="ti-cloud-storm";}
+    else if(code>=71){desc="Snow";icon="ti-snowflake";}
+    else if(code>=61){desc="Rain";icon="ti-cloud-rain";}
+    else if(code>=51){desc="Drizzle";icon="ti-cloud-drizzle";}
+    else if(code>=45){desc="Foggy";icon="ti-cloud-fog";}
+    else if(code>=3){desc="Overcast";icon="ti-cloud";}
+    else if(code>=1){desc="Partly cloudy";icon="ti-cloud-sun";}
+    set(s=>({wx:{...s.wx,[key]:{temp:Math.round(c.temperature_2m),feels:Math.round(c.apparent_temperature),wind:Math.round(c.windspeed_10m),desc,icon}}}));
+  }catch{}
+}
+
+draw();
+fetchWeather(44.5,-80.22,"collingwood");
+fetchWeather(43.65,-79.38,"toronto");
+set({calLoading:false});
+</script>
+</body>
+</html>
